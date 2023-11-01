@@ -1,0 +1,19 @@
+{
+  "name": "collaboration-fwg-16",
+  "version": "1.0.0",
+  "description": "This project is about to create a powerfull and most valuable financial website that can transfering amount of money between users.",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon index.js",
+    "start": "node index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}
