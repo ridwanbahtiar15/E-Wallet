@@ -1,7 +1,9 @@
+require("dotenv").config();
 const express = require('express')
 const server = express();
 const mainRouter = require("./src/Routers/main.router");
 const cors = require("cors");
+
 
 server.listen(1600, () => {
     console.log("Server is running at port 1600");
