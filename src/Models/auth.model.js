@@ -37,6 +37,11 @@ const pin = (userPin, id) => {
     const values = [userPin, id];
     return db.query(sql, values)
 }
+const changePwd = (hashedPassword, email) => {
+    const sql = "update users set pwd = $1 where email = $2";
+    const values = [hashedPassword, email];
+    return db.query(sql, values)
+}
 
 
-module.exports = {register, selectUsers, activating, blacklistToken, checkTokenValidating, pin, createBalance};
+module.exports = {register, selectUsers, activating, blacklistToken, checkTokenValidating, pin, createBalance, changePwd};
