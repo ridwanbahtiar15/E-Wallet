@@ -1,4 +1,4 @@
-const {register, selectUsers, activating} = require("../Models/auth.model")
+const {register, selectUsers, activating, blacklistToken} = require("../Models/auth.model")
 const argon = require("argon2");
 const jwt = require("jsonwebtoken");
 const {jwtKey, issuerWho} = require("../Configs/environtment")
@@ -17,7 +17,7 @@ const registerUser = async (req, res) => {
           subject: "Email Activation",
           data: {
             username: body.name,
-            activationLink: `http://localhost:1600/auth/activate?email=${body.email}&otp=${otp}`,
+            activationLink: `http://localhost:1600/auth?email=${body.email}&otp=${otp}`,
           }
         });
         res.status(201).json({
@@ -101,7 +101,7 @@ const logOutUser = async (req, res) => {
   try {
     const bearer = req.header("Authorization");
     const token = bearer.split(" ")[1];
-    const logout = await out(token);
+    const logout = await blacklistToken(token);
     res.status(200).json({
       msg: "Log Out success. Thank You"
     })
@@ -113,4 +113,4 @@ const logOutUser = async (req, res) => {
   }
 }
 
-module.exports = {registerUser,loginUser, activateUser}
+module.exports = {registerUser,loginUser, activateUser, logOutUser}

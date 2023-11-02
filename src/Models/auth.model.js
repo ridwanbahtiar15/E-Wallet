@@ -15,13 +15,19 @@ const activating = (email) => {
     const sql = "update users set user_activated = true where user_email = $1";
     const value = [email]
     return db.query(sql, value)
+
 }
 const blacklistToken = (token) => {
-    const sql = "insert into blacklist (jwt_code) values ($1)";
+    const sql = "insert into blacklist (jwt_token) values ($1)";
     const value = [token];
     return db.query(sql,value)
 }
+const checkTokenValidating = (token) => {
+    const sql = "select id from blacklist where jwt_code = $1";
+    const values = [token];
+    return db.query(sql, values)
+}
 
 
 
-module.exports = {register, selectUsers, activating};
+module.exports = {register, selectUsers, activating, blacklistToken, checkTokenValidating};
