@@ -22,7 +22,7 @@ const registerUser = async (req, res) => {
           subject: "Email Activation",
           data: {
             username: body.name,
-            activationLink: `https://e-wallet-by-fwg-16-fupnrgnb9-gilang-rizaltins-projects.vercel.app/auth?email=${body.email}&otp=${otp}`,
+            activationLink: `https://e-wallet-by-fwg-16.vercel.app/auth?email=${body.email}&otp=${otp}`,
           }
         });
         await client.query("commit");
@@ -151,7 +151,7 @@ const forgotPasswordUser = async (req, res) => {
       subject: "Reset Password",
       data: {
         username: result.rows[0].full_name,
-        activationLink: `https://e-wallet-by-fwg-16-fupnrgnb9-gilang-rizaltins-projects.vercel.app/auth/password?email=${body.email}&otp=${result.rows[0].otp}`,
+        activationLink: `https://e-wallet-by-fwg-16.vercel.app/auth/password?email=${body.email}&otp=${result.rows[0].otp}`,
       }
     });
     res.status(200).json({
