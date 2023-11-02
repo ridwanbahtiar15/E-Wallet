@@ -1,8 +1,9 @@
-const {register, selectUsers, activating, blacklistToken, pin, createBalance} = require("../Models/auth.model")
+const {register, selectUsers, activating, blacklistToken, pin, createBalance, changePwd} = require("../Models/auth.model")
 const argon = require("argon2");
 const jwt = require("jsonwebtoken");
 const {jwtKey, issuerWho} = require("../Configs/environtment")
 const {activateMail} = require("../Utils/activateMail")
+const {resetPwdMail} = require("../Utils/forgetPasswordMail")
 const db = require("../Configs/postgre");
 
 
@@ -21,7 +22,7 @@ const registerUser = async (req, res) => {
           subject: "Email Activation",
           data: {
             username: body.name,
-            activationLink: `http://localhost:1600/auth?email=${body.email}&otp=${otp}`,
+            activationLink: `https://e-wallet-by-fwg-16-fupnrgnb9-gilang-rizaltins-projects.vercel.app/auth?email=${body.email}&otp=${otp}`,
           }
         });
         await client.query("commit");
@@ -136,4 +137,52 @@ const createPin = async (req, res) => {
     })
   }
 }
-module.exports = {registerUser,loginUser, activateUser, logOutUser, createPin}
+const forgotPasswordUser = async (req, res) => {
+  try {
+    const {body} = req;
+    const result = await selectUsers(body.email)
+    if (result.rowCount === 0) {
+      return res.status(404).json({
+        msg: "Your Account not Found"
+      });
+    };
+    const info = await resetPwdMail({
+      to: body.email,
+      subject: "Reset Password",
+      data: {
+        username: result.rows[0].full_name,
+        activationLink: `https://e-wallet-by-fwg-16-fupnrgnb9-gilang-rizaltins-projects.vercel.app/auth/password?email=${body.email}&otp=${result.rows[0].otp}`,
+      }
+    });
+    res.status(200).json({
+      msg: `Please check E-mail reset password`,
+    });
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({
+      msg: "Internal Server Error"
+    })
+  }
+}
+const newPasswordUser = async (req, res) => {
+  try {
+    const {body, query} = req;
+    const data = await selectUsers(query.email)
+    if (data.rows[0].otp !== parseInt(query.otp)) 
+      return res.status(401).json({
+        msg: "Your otp is wrong",
+        data: data.rows[0].otp,
+      })
+      const hashedPwd = await argon.hash(body.password);
+      const result = await changePwd(hashedPwd, query.email)
+      res.status(201).json({
+        msg: `Password for ${query.email} complete updating `
+      })
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({
+      msg: "Internal Server Error"
+    })
+  }
+}
+module.exports = {registerUser,loginUser, activateUser, logOutUser, createPin, forgotPasswordUser, newPasswordUser}
