@@ -28,9 +28,9 @@ const isLogin = async (req, res, next) => {
                 })
         };
         req.userInfo = decode;
-//        console.log(decode);
+        // console.log(decode);
         next();
     });
-    };
+};
 
-    module.exports = {isLogin}
+module.exports = {isLogin}
