@@ -1,4 +1,4 @@
-const { getTransaction, metaTransaction, getIncome, dashboardChartData, getTotal7Days, getTotalLastWeek } = require("../Models/transaction.model");
+const { getTransaction, metaTransaction, getIncome, getExpense, dashboardChartData, getTotal7Days, getTotalLastWeek } = require("../Models/transaction.model");
 
 const getHistory = async (req, res) => {
   try {
@@ -82,16 +82,41 @@ const transactionChart = async (req, res) => {
   try {
     const { query, params } = req;
 
-    const result = await getIncome(query, params);
+    const thisWeek = await getTotal7Days(params);
+    const lastWeek = await getTotalLastWeek(params);
+
+    if (query.summary === "Income") {
+      const result = await getIncome(query, params);
+      if (!result.rows.length)
+        return res.status(404).json({
+          msg: "No Transaction Found",
+          result: [],
+          thisWeekData: thisWeek.rows,
+          lastWeekData: lastWeek.rows,
+        });
+
+      return res.status(200).json({
+        msg: "Success",
+        result: result.rows,
+        thisWeekData: thisWeek.rows,
+        lastWeekData: lastWeek.rows,
+      });
+    }
+
+    const result = await getExpense(query, params);
     if (!result.rows.length)
       return res.status(404).json({
         msg: "No Transaction Found",
         result: [],
+        thisWeekData: thisWeek.rows,
+        lastWeekData: lastWeek.rows,
       });
 
     res.status(200).json({
       msg: "Success",
       result: result.rows,
+      thisWeekData: thisWeek.rows,
+      lastWeekData: lastWeek.rows,
     });
   } catch (error) {
     console.log(error);

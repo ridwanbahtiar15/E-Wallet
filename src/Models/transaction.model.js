@@ -55,7 +55,35 @@ WHERE u.id = $1 and t.to_user_id = $1 `;
   if (query.start && query.end) {
     values.push(query.start);
     values.push(query.end);
-    sql += `and (t.created_at <= cast($3 as timestamp) + interval '1 day' and t.created_at > $2 ) `;
+    sql += `and (t.created_at <= cast($2 as timestamp) + interval '1 day' and t.created_at > $3 ) `;
+  } else {
+    sql += `and (t.created_at <= current_date + interval '1 day' and t.created_at > current_date - interval '7 days' ) `;
+  }
+  sql += 'group by "date", "summary" ';
+
+  return db.query(sql, values);
+};
+
+const getExpense = (query, params) => {
+  let sql = `select
+  sum(t.transaction_amount),
+  CASE 
+      WHEN t.from_user_id = $1 THEN 'Expense'
+  END AS "summary",
+  to_char(t.created_at, 'DD-MM-YYYY') as "date" 
+FROM
+  "transaction" t
+JOIN
+  users u 
+ON 
+  t.from_user_id = u.id OR t.to_user_id = u.id
+WHERE u.id = $1 and t.from_user_id = $1 `;
+  const values = [params.userid];
+
+  if (query.start && query.end) {
+    values.push(query.start);
+    values.push(query.end);
+    sql += `and (t.created_at <= cast($2 as timestamp) + interval '1 day' and t.created_at > $3 ) `;
   } else {
     sql += `and (t.created_at <= current_date + interval '1 day' and t.created_at > current_date - interval '7 days' ) `;
   }
@@ -84,7 +112,7 @@ WHERE u.id = $1 `;
   if (query.start && query.end) {
     values.push(query.start);
     values.push(query.end);
-    sql += `and (t.created_at <= cast($3 as timestamp) + interval '1 day' and t.created_at > $2 ) `;
+    sql += `and (t.created_at <= cast($2 as timestamp) + interval '1 day' and t.created_at > $3 ) `;
   } else {
     sql += `and (t.created_at <= current_date + interval '1 day' and t.created_at > current_date - interval '7 days' ) `;
   }
@@ -126,9 +154,10 @@ JOIN
   users u 
 ON 
   t.from_user_id = u.id OR t.to_user_id = u.id
-WHERE u.id = $1 and (t.created_at < current_date - interval '7 days' and t.created_at > current_date - interval '14 days' )' 
-group by "summary"`;
+WHERE u.id = $1 and (t.created_at < current_date - interval '7 days' and t.created_at > current_date - interval '14 days' ) 
+group by "summary" `;
   const values = [params.userid];
+  // console.log(sql);
 
   return db.query(sql, values);
 };
@@ -137,6 +166,7 @@ module.exports = {
   getTransaction,
   metaTransaction,
   getIncome,
+  getExpense,
   dashboardChartData,
   getTotal7Days,
   getTotalLastWeek,
