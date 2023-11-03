@@ -10,5 +10,8 @@ module.exports = {
     refreshToken : process.env.GOOGLE_REFRESH_TOKEN,
     mail_service : process.env.MAIL_SERVICES,
     mail_auth_type: process.env.MAIL_AUTH_TYPE,
-    mail_user: process.env.MAIL_USER
+    mail_user: process.env.MAIL_USER,
+    cloudName: process.env.CLOUDINARY_NAME,
+    cloudKey: process.env.CLOUDINARY_KEY,
+    cloudSecret: process.env.CLOUDINARY_SECRET,
 }
