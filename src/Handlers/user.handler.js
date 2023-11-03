@@ -1,6 +1,6 @@
 const {readUsers, totalData, readProfile, sensitiveProfile, updateProfile, updatePin} = require("../Models/users.model")
 const argon = require("argon2");
-
+const {uploader} = require("../Utils/cloudUploader")
 
 const searchUser = async (req, res) => {
     try {
@@ -63,11 +63,8 @@ const updateUser = async (req, res) => {
     try {
     const {id} = req.userInfo;
     const {body} = req;
-    let fileLink = ``;
-    if (req.file) {
-      fileLink += `/img/${req.file.filename}`;
-      // console.log(req.file)
-    };
+    const { data, err } = await uploader(req, "photo_profile", id);
+    if (err) throw err;
     let hashedPwd = null;
     if (body.new_password || body.last_password) {
       if (!body.new_password || !body.last_password)
@@ -82,7 +79,7 @@ const updateUser = async (req, res) => {
         });
         hashedPwd = await argon.hash(body.new_password);
       };
-    const result = await updateProfile(id, body, hashedPwd, fileLink);
+    const result = await updateProfile(id, body, hashedPwd, data.secure_url);
     res.status(201).json({
         msg: `Successfully update data for ${result.rows[0].full_name}`,
         data: body,
