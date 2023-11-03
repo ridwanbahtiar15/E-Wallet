@@ -14,7 +14,7 @@ server.use(express.static("./public"));
 server.use(mainRouter);
 server.use(
     cors({
-      origin: "http://localhost:5173",
+      origin: "http://localhost:5173/",
       methods: ["PATCH","POST", "DELETE"],
     })
   );
