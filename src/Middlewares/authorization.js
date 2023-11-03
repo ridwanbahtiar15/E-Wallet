@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
-const {jwtKey, issuerWho} = require("../Configs/environtment");
-const {checkTokenValidating} = require("../Models/auth.model");
+const { jwtKey, issuerWho } = require("../Configs/environtment");
+const { checkTokenValidating } = require("../Models/auth.model");
 
 const isLogin = async (req, res, next) => {
     const bearer = req.header("Authorization")
