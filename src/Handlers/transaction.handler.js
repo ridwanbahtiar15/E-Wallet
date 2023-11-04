@@ -1,10 +1,10 @@
-const { getTransaction, metaTransaction, getIncome, getExpense, dashboardChartData, getTotal7Days, getTotalLastWeek, deleteFromUser, deleteToUser } = require("../Models/transaction.model");
+const { getTransaction, metaTransaction, getIncome, getExpense, dashboardChartData, getTotal7Days, getTotalLastWeek, deleteFromUser, deleteToUser, deleteFromToUser } = require("../Models/transaction.model");
 
 const getHistory = async (req, res) => {
   try {
     const { query, params, userInfo } = req;
     const { full_name } = userInfo;
-    console.log(userInfo);
+    // console.log(userInfo);
     const result = [];
     const resultMeta = [];
 
@@ -52,7 +52,7 @@ const getHistory = async (req, res) => {
           photo_profile: data.rows[i].receiver_photo_profile,
           transaction_type: data.rows[i].transaction_type,
           transaction_amount: data.rows[i].transaction_amount,
-          summary: data.rows[i].summary,
+          summary: "Income",
           created_at: data.rows[i].created_at,
         });
       }
@@ -179,15 +179,22 @@ const deleteTransaction = async (req, res) => {
   try {
     const { query, params } = req;
 
-    if (query.summary === "Income") {
-      const result = await deleteToUser(params);
+    if (query.transaction_type === "Transfer") {
+      if (query.summary === "Income") {
+        const result = await deleteToUser(params);
+        return res.status(200).json({
+          msg: "Delete Success",
+          result: result.rows,
+        });
+      }
+      const result = await deleteFromUser(params);
       return res.status(200).json({
         msg: "Delete Success",
         result: result.rows,
       });
     }
-    const result = await deleteFromUser(params);
-    return res.status(200).json({
+    const result = await deleteFromToUser(params);
+    res.status(200).json({
       msg: "Delete Success",
       result: result.rows,
     });
