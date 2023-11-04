@@ -1,37 +1,36 @@
-const {register, selectUsers, activating, blacklistToken, pin, createBalance, changePwd} = require("../Models/auth.model")
+const { register, selectUsers, activating, blacklistToken, pin, createBalance, changePwd } = require("../Models/auth.model");
 const argon = require("argon2");
 const jwt = require("jsonwebtoken");
-const {jwtKey, issuerWho} = require("../Configs/environtment")
-const {activateMail} = require("../Utils/activateMail")
-const {resetPwdMail} = require("../Utils/forgetPasswordMail")
+const { jwtKey, issuerWho } = require("../Configs/environtment");
+const { activateMail } = require("../Utils/activateMail");
+const { resetPwdMail } = require("../Utils/forgetPasswordMail");
 
 const db = require("../Configs/postgre");
 
 const registerUser = async (req, res) => {
   const client = await db.connect();
-    try {
-      await client.query("begin");
-        const {body} = req;
-        const otp = Math.floor(100000 + Math.random() * 900000);
-        const hashedPassword = await argon.hash(body.password);
-        const data = await register(body, hashedPassword, otp);
-        const createdUser = data.rows[0];
-        const dataBalance = await createBalance(createdUser.id)
-        const info = await activateMail({
-          to: body.email,
-          subject: "Email Activation",
-          data: {
-            username: body.name,
-            activationLink: `https://e-wallet-by-fwg-16.vercel.app/auth?email=${body.email}&otp=${otp}`,
-          }
-        });
-        await client.query("commit");
-        res.status(201).json({
-            msg: `User successfully created. Your ID = ${createdUser.id} with full name : ${createdUser.full_name}`,
-            check: "Please check E-mail and activated"
-          });
-    } catch (error) {
-
+  try {
+    await client.query("begin");
+    const { body } = req;
+    const otp = Math.floor(100000 + Math.random() * 900000);
+    const hashedPassword = await argon.hash(body.password);
+    const data = await register(body, hashedPassword, otp);
+    const createdUser = data.rows[0];
+    const dataBalance = await createBalance(createdUser.id);
+    const info = await activateMail({
+      to: body.email,
+      subject: "Email Activation",
+      data: {
+        username: body.name,
+        activationLink: `https://e-wallet-by-fwg-16.vercel.app/auth?email=${body.email}&otp=${otp}`,
+      },
+    });
+    await client.query("commit");
+    res.status(201).json({
+      msg: `User successfully created. Your ID = ${createdUser.id} with full name : ${createdUser.full_name}`,
+      check: "Please check E-mail and activated",
+    });
+  } catch (error) {
     console.error(error);
     await client.query("rollback");
     res.status(500).json({
@@ -104,6 +103,7 @@ const loginUser = async (req, res) => {
         });
       }
     );
+    console.log(payload);
     // res.status(200).json({
     //   msg: "succes",
     //   data: result.rows[0]
@@ -144,53 +144,53 @@ const createPin = async (req, res) => {
       msg: "Internal Server Error",
     });
   }
-}
+};
 const forgotPasswordUser = async (req, res) => {
   try {
-    const {body} = req;
-    const result = await selectUsers(body.email)
+    const { body } = req;
+    const result = await selectUsers(body.email);
     if (result.rowCount === 0) {
       return res.status(404).json({
-        msg: "Your Account not Found"
+        msg: "Your Account not Found",
       });
-    };
+    }
     const info = await resetPwdMail({
       to: body.email,
       subject: "Reset Password",
       data: {
         username: result.rows[0].full_name,
         activationLink: `https://e-wallet-by-fwg-16.vercel.app/auth/password?email=${body.email}&otp=${result.rows[0].otp}`,
-      }
+      },
     });
     res.status(200).json({
       msg: `Please check E-mail reset password`,
     });
   } catch (error) {
-    console.log(error)
+    console.log(error);
     res.status(500).json({
-      msg: "Internal Server Error"
-    })
+      msg: "Internal Server Error",
+    });
   }
-}
+};
 const newPasswordUser = async (req, res) => {
   try {
-    const {body, query} = req;
-    const data = await selectUsers(query.email)
-    if (data.rows[0].otp !== parseInt(query.otp)) 
+    const { body, query } = req;
+    const data = await selectUsers(query.email);
+    if (data.rows[0].otp !== parseInt(query.otp))
       return res.status(401).json({
         msg: "Your otp is wrong",
         data: data.rows[0].otp,
-      })
-      const hashedPwd = await argon.hash(body.password);
-      const result = await changePwd(hashedPwd, query.email)
-      res.status(201).json({
-        msg: `Password for ${query.email} complete updating `
-      })
+      });
+    const hashedPwd = await argon.hash(body.password);
+    const result = await changePwd(hashedPwd, query.email);
+    res.status(201).json({
+      msg: `Password for ${query.email} complete updating `,
+    });
   } catch (error) {
-    console.log(error)
+    console.log(error);
     res.status(500).json({
-      msg: "Internal Server Error"
-    })
+      msg: "Internal Server Error",
+    });
   }
-}
-module.exports = {registerUser,loginUser, activateUser, logOutUser, createPin, forgotPasswordUser, newPasswordUser}
+};
+module.exports = { registerUser, loginUser, activateUser, logOutUser, createPin, forgotPasswordUser, newPasswordUser };
