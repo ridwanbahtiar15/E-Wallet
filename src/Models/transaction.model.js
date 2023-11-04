@@ -1,7 +1,7 @@
 const db = require("../Configs/postgre");
 
 const getTransaction = (query, params) => {
-  let sql = `SELECT t.id, u1.full_name AS "sender_full_name", u1.phone_number as "sender_phone_number", u1.photo_profile as "sender_photo_profile", t.from_deleted_at as "sender_deleted_at", u2.full_name AS "receiver_full_name", u2.phone_number as "receiver_phone_number", u2.photo_profile as "receiver_photo_profile", t.to_deleted_at as "receiver_deleted_at", tt.type_name as "transaction_type", t.transaction_amount, case when t.from_user_id = $2 then 'Expense' when t.to_user_id = $2 then 'Income' end as summary, t.created_at FROM "transaction" t JOIN users u1 ON t.from_user_id = u1.id JOIN users u2 ON t.to_user_id = u2.id join transaction_type tt on t.transaction_type_id = tt.id where (u1.id = $2 or u2.id = $2) `;
+  let sql = `SELECT t.id, u1.full_name AS "sender_full_name", u1.phone_number as "sender_phone_number", u1.photo_profile as "sender_photo_profile", t.from_deleted_at as "sender_deleted_at", u2.full_name AS "receiver_full_name", u2.phone_number as "receiver_phone_number", u2.photo_profile as "receiver_photo_profile", t.to_deleted_at as "receiver_deleted_at", tt.type_name as "transaction_type", t.transaction_amount, case when t.from_user_id = $2 then 'Expense' when t.to_user_id = $2 then 'Income' end as summary, t.created_at FROM "transaction" t JOIN users u1 ON t.from_user_id = u1.id JOIN users u2 ON t.to_user_id = u2.id join transaction_type tt on t.transaction_type_id = tt.id where (u1.id = $2 or u2.id = $2) and (u1.id = $2 and t.from_deleted_at is null) or (u2.id = $2 and t.to_deleted_at is null)`;
   const values = [parseInt(query.page) || 1, params.userid];
   //   where (u1.id = $2 or u2.id = $2)
   if (query.name) {
@@ -176,6 +176,13 @@ const deleteToUser = (params) => {
   return db.query(sql, values);
 };
 
+const deleteFromToUser = (params) => {
+  let sql = 'update "transaction" t set to_deleted_at = now(), from_deleted_at = now() where t.id = $1 ';
+  const values = [params.transactionId];
+
+  return db.query(sql, values);
+};
+
 module.exports = {
   getTransaction,
   metaTransaction,
@@ -186,4 +193,5 @@ module.exports = {
   getTotalLastWeek,
   deleteFromUser,
   deleteToUser,
+  deleteFromToUser,
 };
