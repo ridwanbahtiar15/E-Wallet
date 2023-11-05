@@ -1,6 +1,22 @@
-const { getTransaction, metaTransaction, getIncome, getExpense, dashboardChartData, getTotal7Days, getTotalLastWeek, topUp, addBalance } = require("../Models/transaction.model");
-const snap = require("../Configs/midtrans")
+const {
+  getTransaction,
+  metaTransaction,
+  getIncome,
+  getExpense,
+  dashboardChartData,
+  getTotal7Days,
+  getTotalLastWeek, topUp, addBalance,
+  deleteFromUser,
+  deleteToUser,
+  deleteFromToUser,
+  getUserBalance,
+  createTransfer,
+  updateSenderBalance,
+  updateReceiverBalance,
+  getBalanceDashboard,
+} = require("../Models/transaction.model");
 const db = require("../Configs/postgre");
+const snap = require("../Configs/midtrans")
 const { v4: uuidv4 } = require('uuid');
 
 
@@ -8,10 +24,12 @@ const getHistory = async (req, res) => {
   try {
     const { query, params, userInfo } = req;
     const { full_name } = userInfo;
-    console.log(userInfo);
+    // console.log(userInfo);
     const result = [];
+    const resultMeta = [];
 
     const data = await getTransaction(query, params);
+    console.log(data.rows);
     if (!data.rows.length)
       return res.status(404).json({
         msg: "No Transaction Found",
@@ -19,7 +37,8 @@ const getHistory = async (req, res) => {
       });
     for (let i = 0; i < data.rows.length; i++) {
       if (data.rows[i].transaction_type === "Transfer") {
-        if (data.rows[i].sender_full_name === full_name)
+        if (data.rows[i].sender_full_name === full_name) {
+          if (data.rows[i].sender_deleted_at) continue;
           result.push({
             id: data.rows[i].id,
             full_name: data.rows[i].receiver_full_name,
@@ -30,7 +49,9 @@ const getHistory = async (req, res) => {
             summary: data.rows[i].summary,
             created_at: data.rows[i].created_at,
           });
-        if (data.rows[i].receiver_full_name === full_name)
+        }
+        if (data.rows[i].receiver_full_name === full_name) {
+          if (data.rows[i].receiver_deleted_at) continue;
           result.push({
             id: data.rows[i].id,
             full_name: data.rows[i].sender_full_name,
@@ -41,7 +62,9 @@ const getHistory = async (req, res) => {
             summary: data.rows[i].summary,
             created_at: data.rows[i].created_at,
           });
+        }
       } else {
+        if (data.rows[i].receiver_deleted_at) continue;
         result.push({
           id: data.rows[i].id,
           full_name: data.rows[i].receiver_full_name,
@@ -49,15 +72,28 @@ const getHistory = async (req, res) => {
           photo_profile: data.rows[i].receiver_photo_profile,
           transaction_type: data.rows[i].transaction_type,
           transaction_amount: data.rows[i].transaction_amount,
-          summary: data.rows[i].summary,
+          summary: "Income",
           created_at: data.rows[i].created_at,
         });
       }
     }
 
-    const metaResult = await metaTransaction(query, params);
-    const totalData = parseInt(metaResult.rows[0].total_data);
-    const totalPage = Math.ceil(totalData / parseInt(query.limit));
+    const metaData = await metaTransaction(query, params);
+    for (let j = 0; j < metaData.rows.length; j++) {
+      if (metaData.rows[j].sender_full_name === full_name) {
+        if (metaData.rows[j].sender_deleted_at) continue;
+        resultMeta.push({
+          full_name: metaData.rows[j].receiver_full_name,
+        });
+      } else if (metaData.rows[j].receiver_full_name === full_name) {
+        if (metaData.rows[j].receiver_deleted_at) continue;
+        resultMeta.push({
+          full_name: metaData.rows[j].sender_full_name,
+        });
+      }
+    }
+    const totalData = parseInt(resultMeta.length);
+    const totalPage = Math.ceil(totalData / 7);
     const isLastPage = parseInt(query.page) >= totalPage;
     const nextPage = parseInt(query.page) + 1;
     const prevPage = parseInt(query.page) - 1;
@@ -88,22 +124,29 @@ const transactionChart = async (req, res) => {
 
     const thisWeek = await getTotal7Days(params);
     const lastWeek = await getTotalLastWeek(params);
+    const userBalance = await getBalanceDashboard(params);
 
     if (query.summary === "Income") {
       const result = await getIncome(query, params);
       if (!result.rows.length)
         return res.status(404).json({
           msg: "No Transaction Found",
-          result: [],
-          thisWeekData: thisWeek.rows,
-          lastWeekData: lastWeek.rows,
+          result: {
+            chart_data: [],
+            userBalance: userBalance.rows[0],
+            thisWeekData: { expense: thisWeek.rows[0], income: thisWeek.rows[1] },
+            lastWeekData: { expense: lastWeek.rows[0], income: lastWeek.rows[1] },
+          },
         });
 
       return res.status(200).json({
         msg: "Success",
-        result: result.rows,
-        thisWeekData: thisWeek.rows,
-        lastWeekData: lastWeek.rows,
+        result: {
+          chart_data: result.rows,
+          userBalance: userBalance.rows[0],
+          thisWeekData: { expense: thisWeek.rows[0], income: thisWeek.rows[1] },
+          lastWeekData: { expense: lastWeek.rows[0], income: lastWeek.rows[1] },
+        },
       });
     }
 
@@ -111,16 +154,22 @@ const transactionChart = async (req, res) => {
     if (!result.rows.length)
       return res.status(404).json({
         msg: "No Transaction Found",
-        result: [],
-        thisWeekData: thisWeek.rows,
-        lastWeekData: lastWeek.rows,
+        result: {
+          chart_data: [],
+          userBalance: userBalance.rows[0],
+          thisWeekData: { expense: thisWeek.rows[0], income: thisWeek.rows[1] },
+          lastWeekData: { expense: lastWeek.rows[0], income: lastWeek.rows[1] },
+        },
       });
 
     res.status(200).json({
       msg: "Success",
-      result: result.rows,
-      thisWeekData: thisWeek.rows,
-      lastWeekData: lastWeek.rows,
+      result: {
+        chart_data: result.rows,
+        userBalance: userBalance.rows[0],
+        thisWeekData: { expense: thisWeek.rows[0], income: thisWeek.rows[1] },
+        lastWeekData: { expense: lastWeek.rows[0], income: lastWeek.rows[1] },
+      },
     });
   } catch (error) {
     console.log(error);
@@ -209,10 +258,81 @@ const topUpUser = async (req, res) => {
   }
 }
 
+const deleteTransaction = async (req, res) => {
+  try {
+    const { query, params } = req;
+
+    if (query.transaction_type === "Transfer") {
+      if (query.summary === "Income") {
+        const result = await deleteToUser(params);
+        return res.status(200).json({
+          msg: "Delete Success",
+          result: result.rows,
+        });
+      }
+      const result = await deleteFromUser(params);
+      return res.status(200).json({
+        msg: "Delete Success",
+        result: result.rows,
+      });
+    }
+    const result = await deleteFromToUser(params);
+    res.status(200).json({
+      msg: "Delete Success",
+      result: result.rows,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      msg: "Internal Server Error",
+    });
+  }
+};
+
+const postTransfer = async (req, res) => {
+  const client = await db.connect();
+  try {
+    const { body, userInfo } = req;
+    const userid = userInfo.id;
+    if (body.amount < 10000)
+      return res.status(400).json({
+        msg: "Cannot Transfer Money Under Rp. 10.000",
+      });
+
+    await client.query("BEGIN");
+    const getData = await getUserBalance(client, userid);
+    if (body.amount > getData.rows[0].balance) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({
+        msg: "Your Balance is Not Enough",
+      });
+    }
+
+    const result = await createTransfer(client, userid, body);
+    const newBalance = await updateSenderBalance(client, userid, body);
+    await updateReceiverBalance(client, body);
+    await client.query("COMMIT");
+    res.status(200).json({
+      msg: " Transfer Success",
+      result: { transfer_data: result.rows[0], new_balance: newBalance.rows[0] },
+    });
+  } catch (error) {
+    console.log(error);
+    await client.query("ROLLBACK");
+    res.status(500).json({
+      msg: "Internal Server Error",
+    });
+  } finally {
+    client.release();
+  }
+};
+
 module.exports = {
   getHistory,
   transactionChart,
   getDashboardData,
   getTokenTopUp,
   topUpUser
+  deleteTransaction,
+  postTransfer,
 };
