@@ -1,22 +1,19 @@
 const db = require("../Configs/postgre");
 
 const getTransaction = (query, params) => {
-  let sql = `SELECT t.id, u1.full_name AS "sender_full_name", u1.phone_number as "sender_phone_number", u1.photo_profile as "sender_photo_profile", t.from_deleted_at as "sender_deleted_at", u2.full_name AS "receiver_full_name", u2.phone_number as "receiver_phone_number", u2.photo_profile as "receiver_photo_profile", t.to_deleted_at as "receiver_deleted_at", tt.type_name as "transaction_type", t.transaction_amount, case when t.from_user_id = $2 then 'Expense' when t.to_user_id = $2 then 'Income' end as summary, t.created_at FROM "transaction" t JOIN users u1 ON t.from_user_id = u1.id JOIN users u2 ON t.to_user_id = u2.id join transaction_type tt on t.transaction_type_id = tt.id where (u1.id = $2 or u2.id = $2) and (u1.id = $2 and t.from_deleted_at is null) or (u2.id = $2 and t.to_deleted_at is null)`;
+  let sql = `SELECT t.id, u1.full_name AS "sender_full_name", u1.phone_number as "sender_phone_number", u1.photo_profile as "sender_photo_profile", t.from_deleted_at as "sender_deleted_at", u2.full_name AS "receiver_full_name", u2.phone_number as "receiver_phone_number", u2.photo_profile as "receiver_photo_profile", t.to_deleted_at as "receiver_deleted_at", tt.type_name as "transaction_type", t.transaction_amount, case when t.from_user_id = $2 then 'Expense' when t.to_user_id = $2 then 'Income' end as summary, t.created_at FROM "transaction" t JOIN users u1 ON t.from_user_id = u1.id JOIN users u2 ON t.to_user_id = u2.id join transaction_type tt on t.transaction_type_id = tt.id where (u1.id = $2 or u2.id = $2) `;
   const values = [parseInt(query.page) || 1, params.userid];
   //   where (u1.id = $2 or u2.id = $2)
   if (query.name) {
     values.push(`%${query.name}%`);
-    sql += "and (u1.full_name ilike $3 or u2.full_name ilike $3) ";
-  }
-  if (query.phone) {
-    values.push(`%${query.phone}%`);
-    sql += "and (u1.phone_number ilike $3 or u2.phone_number ilike $3) ";
+    sql += "and ((u1.full_name ilike $3 or u2.full_name ilike $3) or (u1.phone_number ilike $3 or u2.phone_number ilike $3)) ";
   }
 
+  sql += "and (u1.id = $2 and t.from_deleted_at is null or u2.id = $2 and t.to_deleted_at is null) ";
   sql += "order by t.created_at desc";
   sql += ` limit 7 offset ($1 * 7) - 7`;
 
-  // console.log(sql);
+  console.log(sql);
   return db.query(sql, values);
 };
 
@@ -27,13 +24,9 @@ const metaTransaction = (query, params) => {
 
   if (query.name) {
     values.push(`%${query.name}%`);
-    sql += "and (u1.full_name ilike $2 or u2.full_name ilike $2) ";
+    sql += "and (u1.full_name ilike $2 or u2.full_name ilike $2 or u1.phone_number ilike $2 or u2.phone_number ilike $2) ";
   }
-  if (query.phone) {
-    values.push(`%${query.phone}%`);
-    sql += "and (u1.phone_number ilike $2 or u2.phone_number ilike $2) ";
-  }
-
+  console.log(sql);
   return db.query(sql, values);
 };
 
