@@ -8,6 +8,6 @@ transactionRouter.get("/:userid", isLogin, getHistory);
 transactionRouter.get("/chart/:userid", isLogin, transactionChart);
 transactionRouter.get("/dashboard/:userid", isLogin, getDashboardData);
 transactionRouter.delete("/:transactionId", isLogin, deleteTransaction);
-transactionRouter.post("/transfer/:userid", isLogin, postTransfer);
+transactionRouter.post("/transfer", isLogin, postTransfer);
 
 module.exports = transactionRouter;

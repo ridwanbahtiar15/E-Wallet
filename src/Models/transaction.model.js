@@ -182,21 +182,21 @@ const deleteFromToUser = (params) => {
   return db.query(sql, values);
 };
 
-const getUserBalance = (client, params) => {
+const getUserBalance = (client, userid) => {
   let sql = "select ub.balance from user_balance ub where  ub.user_id = $1";
-  const values = [params.userid];
+  const values = [userid];
 
   return client.query(sql, values);
 };
-const createTransfer = (client, body) => {
+const createTransfer = (client, userid, body) => {
   let sql = `WITH inserted AS (INSERT INTO "transaction" (from_user_id, to_user_id, transaction_amount, transaction_type_id, note, payment_type_id) values ($1, $2, $3, 1, $4, 0) RETURNING *) SELECT i.id, u1.full_name as "sender_full_name", u2.full_name as "receiver_full_name", i.transaction_amount, tt.type_name as "transaction_type", i.note, i.created_at FROM inserted i JOIN  users u1 ON i.from_user_id = u1.id JOIN  users u2 ON i.to_user_id = u2.id join transaction_type tt on i.transaction_type_id = tt.id;`;
-  const values = [body.from, body.to, body.amount, body.notes];
+  const values = [userid, body.to, body.amount, body.notes];
 
   return client.query(sql, values);
 };
-const updateSenderBalance = (client, params, body) => {
+const updateSenderBalance = (client, userid, body) => {
   let sql = "update user_balance set balance = balance - $1, updated_at = now() where user_id = $2 returning balance";
-  const values = [body.amount, params.userid];
+  const values = [body.amount, userid];
 
   return client.query(sql, values);
 };

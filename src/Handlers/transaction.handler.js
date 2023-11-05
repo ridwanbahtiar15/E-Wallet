@@ -239,10 +239,11 @@ const deleteTransaction = async (req, res) => {
 const postTransfer = async (req, res) => {
   const client = await db.connect();
   try {
-    const { body, params } = req;
+    const { body, userInfo } = req;
+    const userid = userInfo.id;
 
     await client.query("BEGIN");
-    const getData = await getUserBalance(client, params);
+    const getData = await getUserBalance(client, userid);
     if (body.amount > getData.rows[0].balance) {
       await client.query("ROLLBACK");
       return res.status(400).json({
@@ -250,8 +251,8 @@ const postTransfer = async (req, res) => {
       });
     }
 
-    const result = await createTransfer(client, body);
-    const newBalance = await updateSenderBalance(client, params, body);
+    const result = await createTransfer(client, userid, body);
+    const newBalance = await updateSenderBalance(client, userid, body);
     await updateReceiverBalance(client, body);
     await client.query("COMMIT");
     res.status(200).json({
