@@ -214,6 +214,11 @@ const getTokenTopUp = async (req, res) => {
   return res.status(400).json({
     msg: "Plese input amount that greater than 1"
   })
+  if (body.method !== "bca_va" && body.method !== "bni_va" && body.method !== "gopay" && body.method !== "bri_va")
+  return res.status(400).json({
+    msg: "Payment Method Unavailable",
+    method: body.method
+  })
   const transactionDetails = {
     transaction_details: {
       order_id: uuidv4(),
@@ -225,7 +230,7 @@ const getTokenTopUp = async (req, res) => {
     customer_details: {
       first_name: body.name
     },
-    enabled_payments: ["bca_va"]
+    enabled_payments: [body.method]
   };
   try {
     const snapToken = await snap.createTransactionToken(transactionDetails);
@@ -332,7 +337,7 @@ module.exports = {
   transactionChart,
   getDashboardData,
   getTokenTopUp,
-  topUpUser
+  topUpUser,
   deleteTransaction,
   postTransfer,
 };
