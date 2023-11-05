@@ -241,6 +241,10 @@ const postTransfer = async (req, res) => {
   try {
     const { body, userInfo } = req;
     const userid = userInfo.id;
+    if (body.amount < 10000)
+      return res.status(400).json({
+        msg: "Cannot Transfer Money Under Rp. 10.000",
+      });
 
     await client.query("BEGIN");
     const getData = await getUserBalance(client, userid);
