@@ -159,9 +159,29 @@ WHERE u.id = $1 and (t.created_at < current_date - interval '7 days' and t.creat
 group by "summary" `;
   const values = [params.userid];
   // console.log(sql);
-
   return db.query(sql, values);
 };
+
+const topUp = (id, body) => {
+  const sql = `insert into transaction (from_user_id, to_user_id, transaction_amount, transaction_type_id, payment_type_id)
+  values ($1, $1, $2, 2, $3)`
+  const values = [id, body.amount, body.payment_type];
+  return db.query(sql, values)
+}
+
+const addBalance = (id, amount) => {
+  // const values = [id, amount]
+  // let sql = `update user_balance 
+  // set balance = balance + `
+  // sql += parseInt(values[1])
+  // sql += ` where user_id = $1;`
+  // return db.query(sql, values)
+  const sql = `update user_balance 
+  set balance = balance + $2 
+  where user_id = $1;`
+  const values = [id, amount];
+  return db.query(sql, values)
+}
 
 const deleteFromUser = (params) => {
   let sql = 'update "transaction" t set from_deleted_at = now() where t.id = $1 ';
@@ -222,6 +242,8 @@ module.exports = {
   dashboardChartData,
   getTotal7Days,
   getTotalLastWeek,
+  topUp,
+  addBalance
   deleteFromUser,
   deleteToUser,
   deleteFromToUser,
