@@ -243,7 +243,7 @@ module.exports = {
   getTotal7Days,
   getTotalLastWeek,
   topUp,
-  addBalance
+  addBalance,
   deleteFromUser,
   deleteToUser,
   deleteFromToUser,
