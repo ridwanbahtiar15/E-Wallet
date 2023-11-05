@@ -38,6 +38,7 @@ const searchUser = async (req, res) => {
       })
     }
 }
+
 const getUserProfile = async (req, res) => {
     try {
     const {id} = req.userInfo
@@ -59,12 +60,13 @@ const getUserProfile = async (req, res) => {
     })
     }
 }
+
 const updateUser = async (req, res) => {
     try {
     const {id} = req.userInfo;
     const {body} = req;
     const { data, err } = await uploader(req, "photo_profile", id);
-    if (err) throw err;
+    if (err) throw err
     let hashedPwd = null;
     if (body.new_password || body.last_password) {
       if (!body.new_password || !body.last_password)
@@ -79,7 +81,7 @@ const updateUser = async (req, res) => {
         });
         hashedPwd = await argon.hash(body.new_password);
       };
-    const result = await updateProfile(id, body, hashedPwd, data.secure_url);
+    const result = await updateProfile(id, body, hashedPwd, data && data.secure_url);
     res.status(201).json({
         msg: `Successfully update data for ${result.rows[0].full_name}`,
         data: body,
@@ -108,6 +110,7 @@ const updateUser = async (req, res) => {
           });
     }
 }
+
 const confirmPin = async (req, res) => {
     try {
     const {id} = req.userInfo;
@@ -127,6 +130,7 @@ const confirmPin = async (req, res) => {
     })
     }
 }
+
 const updateUserPin = async (req, res) => {
     try {
     const {id} = req.userInfo;

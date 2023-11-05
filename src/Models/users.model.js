@@ -47,6 +47,7 @@ const totalData = (query) => {
 const readProfile = (id) => {
     const sql = `select u.id as "No",
     u.photo_profile as "photo_profile",
+    u.email as "email",
     u.full_name as "full_name",
     ub.balance as "balance",
     u.phone_number as "phone_number"

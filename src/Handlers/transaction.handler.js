@@ -1,4 +1,8 @@
-const { getTransaction, metaTransaction, getIncome, getExpense, dashboardChartData, getTotal7Days, getTotalLastWeek } = require("../Models/transaction.model");
+const { getTransaction, metaTransaction, getIncome, getExpense, dashboardChartData, getTotal7Days, getTotalLastWeek, topUp, addBalance } = require("../Models/transaction.model");
+const snap = require("../Configs/midtrans")
+const db = require("../Configs/postgre");
+const { v4: uuidv4 } = require('uuid');
+
 
 const getHistory = async (req, res) => {
   try {
@@ -155,8 +159,60 @@ const getDashboardData = async (req, res) => {
   }
 };
 
+const getTokenTopUp = async (req, res) => {
+  const {body} = req;
+  if (body.amount === 0)
+  return res.status(400).json({
+    msg: "Plese input amount that greater than 1"
+  })
+  const transactionDetails = {
+    transaction_details: {
+      order_id: uuidv4(),
+      gross_amount: parseInt(body.amount),
+    },
+    credit_card: {
+      secure: true,
+    },
+    customer_details: {
+      first_name: body.name
+    },
+    enabled_payments: ["bca_va"]
+  };
+  try {
+    const snapToken = await snap.createTransactionToken(transactionDetails);
+    res.status(201).json({ snapToken });
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ error: 'Failed to create Snap token' });
+  }
+}
+
+const topUpUser = async (req, res) => {
+  const client = await db.connect();
+  try {
+    await client.query("begin");
+    const {body} = req;
+    const data = await topUp(body.id, body);
+    const balance = await addBalance(body.id, body.amount);
+    await client.query("commit");
+    res.status(200).json({
+      msg: "Success for Top Up"
+    })
+  } catch (error) {
+    console.error(error);
+    await client.query("rollback");
+    res.status(500).json({
+      msg: "Internal Server Error"
+    })
+  } finally {
+    client.release();
+  }
+}
+
 module.exports = {
   getHistory,
   transactionChart,
   getDashboardData,
+  getTokenTopUp,
+  topUpUser
 };
