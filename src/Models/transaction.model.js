@@ -69,7 +69,7 @@ const getExpense = (query, params) => {
   let sql = `select
   sum(t.transaction_amount),
   CASE 
-      WHEN t.from_user_id = $1 THEN 'Expense'
+      WHEN t.from_user_id = $1 and t.to_user_id != $1 THEN 'Expense'
   END AS "summary",
   to_char(t.created_at, 'DD-MM-YYYY') as "date" 
 FROM
@@ -78,7 +78,7 @@ JOIN
   users u 
 ON 
   t.from_user_id = u.id OR t.to_user_id = u.id
-WHERE u.id = $1 and t.from_user_id = $1 `;
+WHERE u.id = $1 and t.from_user_id = $1 and t.to_user_id != $1 `;
   const values = [params.userid];
 
   if (query.start && query.end) {
@@ -126,7 +126,7 @@ const getTotal7Days = (params) => {
   let sql = `select
   sum(t.transaction_amount),
   CASE 
-      WHEN t.from_user_id = $1 THEN 'Expense'
+  WHEN t.from_user_id = $1 and t.to_user_id != $1 THEN 'Expense'
       WHEN t.to_user_id = $1 THEN 'Income'
   END AS "summary"
 FROM
@@ -146,7 +146,7 @@ const getTotalLastWeek = (params) => {
   let sql = `select
   sum(t.transaction_amount),
   CASE 
-      WHEN t.from_user_id = $1 THEN 'Expense'
+      WHEN t.from_user_id = $1 and t.to_user_id != $1 THEN 'Expense'
       WHEN t.to_user_id = $1 THEN 'Income'
   END AS "summary"
 FROM
@@ -175,10 +175,41 @@ const deleteToUser = (params) => {
 
   return db.query(sql, values);
 };
-
 const deleteFromToUser = (params) => {
   let sql = 'update "transaction" t set to_deleted_at = now(), from_deleted_at = now() where t.id = $1 ';
   const values = [params.transactionId];
+
+  return db.query(sql, values);
+};
+
+const getUserBalance = (client, userid) => {
+  let sql = "select ub.balance from user_balance ub where  ub.user_id = $1";
+  const values = [userid];
+
+  return client.query(sql, values);
+};
+const createTransfer = (client, userid, body) => {
+  let sql = `WITH inserted AS (INSERT INTO "transaction" (from_user_id, to_user_id, transaction_amount, transaction_type_id, note, payment_type_id) values ($1, $2, $3, 1, $4, 0) RETURNING *) SELECT i.id, u1.full_name as "sender_full_name", u2.full_name as "receiver_full_name", i.transaction_amount, tt.type_name as "transaction_type", i.note, i.created_at FROM inserted i JOIN  users u1 ON i.from_user_id = u1.id JOIN  users u2 ON i.to_user_id = u2.id join transaction_type tt on i.transaction_type_id = tt.id;`;
+  const values = [userid, body.to, body.amount, body.notes];
+
+  return client.query(sql, values);
+};
+const updateSenderBalance = (client, userid, body) => {
+  let sql = "update user_balance set balance = balance - $1, updated_at = now() where user_id = $2 returning balance";
+  const values = [body.amount, userid];
+
+  return client.query(sql, values);
+};
+const updateReceiverBalance = (client, body) => {
+  let sql = "update user_balance set balance = balance + $1, updated_at = now() where user_id = $2";
+  const values = [body.amount, body.to];
+
+  return client.query(sql, values);
+};
+
+const getBalanceDashboard = (params) => {
+  let sql = "select ub.balance from user_balance ub where  ub.user_id = $1";
+  const values = [params.userid];
 
   return db.query(sql, values);
 };
@@ -194,4 +225,9 @@ module.exports = {
   deleteFromUser,
   deleteToUser,
   deleteFromToUser,
+  getUserBalance,
+  createTransfer,
+  updateSenderBalance,
+  updateReceiverBalance,
+  getBalanceDashboard,
 };

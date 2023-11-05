@@ -1,4 +1,21 @@
-const { getTransaction, metaTransaction, getIncome, getExpense, dashboardChartData, getTotal7Days, getTotalLastWeek, deleteFromUser, deleteToUser, deleteFromToUser } = require("../Models/transaction.model");
+const {
+  getTransaction,
+  metaTransaction,
+  getIncome,
+  getExpense,
+  dashboardChartData,
+  getTotal7Days,
+  getTotalLastWeek,
+  deleteFromUser,
+  deleteToUser,
+  deleteFromToUser,
+  getUserBalance,
+  createTransfer,
+  updateSenderBalance,
+  updateReceiverBalance,
+  getBalanceDashboard,
+} = require("../Models/transaction.model");
+const db = require("../Configs/postgre");
 
 const getHistory = async (req, res) => {
   try {
@@ -104,22 +121,29 @@ const transactionChart = async (req, res) => {
 
     const thisWeek = await getTotal7Days(params);
     const lastWeek = await getTotalLastWeek(params);
+    const userBalance = await getBalanceDashboard(params);
 
     if (query.summary === "Income") {
       const result = await getIncome(query, params);
       if (!result.rows.length)
         return res.status(404).json({
           msg: "No Transaction Found",
-          result: [],
-          thisWeekData: thisWeek.rows,
-          lastWeekData: lastWeek.rows,
+          result: {
+            chart_data: [],
+            userBalance: userBalance.rows[0],
+            thisWeekData: { expense: thisWeek.rows[0], income: thisWeek.rows[1] },
+            lastWeekData: { expense: lastWeek.rows[0], income: lastWeek.rows[1] },
+          },
         });
 
       return res.status(200).json({
         msg: "Success",
-        result: result.rows,
-        thisWeekData: thisWeek.rows,
-        lastWeekData: lastWeek.rows,
+        result: {
+          chart_data: result.rows,
+          userBalance: userBalance.rows[0],
+          thisWeekData: { expense: thisWeek.rows[0], income: thisWeek.rows[1] },
+          lastWeekData: { expense: lastWeek.rows[0], income: lastWeek.rows[1] },
+        },
       });
     }
 
@@ -127,16 +151,22 @@ const transactionChart = async (req, res) => {
     if (!result.rows.length)
       return res.status(404).json({
         msg: "No Transaction Found",
-        result: [],
-        thisWeekData: thisWeek.rows,
-        lastWeekData: lastWeek.rows,
+        result: {
+          chart_data: [],
+          userBalance: userBalance.rows[0],
+          thisWeekData: { expense: thisWeek.rows[0], income: thisWeek.rows[1] },
+          lastWeekData: { expense: lastWeek.rows[0], income: lastWeek.rows[1] },
+        },
       });
 
     res.status(200).json({
       msg: "Success",
-      result: result.rows,
-      thisWeekData: thisWeek.rows,
-      lastWeekData: lastWeek.rows,
+      result: {
+        chart_data: result.rows,
+        userBalance: userBalance.rows[0],
+        thisWeekData: { expense: thisWeek.rows[0], income: thisWeek.rows[1] },
+        lastWeekData: { expense: lastWeek.rows[0], income: lastWeek.rows[1] },
+      },
     });
   } catch (error) {
     console.log(error);
@@ -206,9 +236,44 @@ const deleteTransaction = async (req, res) => {
   }
 };
 
+const postTransfer = async (req, res) => {
+  const client = await db.connect();
+  try {
+    const { body, userInfo } = req;
+    const userid = userInfo.id;
+
+    await client.query("BEGIN");
+    const getData = await getUserBalance(client, userid);
+    if (body.amount > getData.rows[0].balance) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({
+        msg: "Your Balance is Not Enough",
+      });
+    }
+
+    const result = await createTransfer(client, userid, body);
+    const newBalance = await updateSenderBalance(client, userid, body);
+    await updateReceiverBalance(client, body);
+    await client.query("COMMIT");
+    res.status(200).json({
+      msg: " Transfer Success",
+      result: { transfer_data: result.rows[0], new_balance: newBalance.rows[0] },
+    });
+  } catch (error) {
+    console.log(error);
+    await client.query("ROLLBACK");
+    res.status(500).json({
+      msg: "Internal Server Error",
+    });
+  } finally {
+    client.release();
+  }
+};
+
 module.exports = {
   getHistory,
   transactionChart,
   getDashboardData,
   deleteTransaction,
+  postTransfer,
 };
