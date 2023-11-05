@@ -29,7 +29,7 @@ const getHistory = async (req, res) => {
     const resultMeta = [];
 
     const data = await getTransaction(query, params);
-    console.log(data.rows);
+    // console.log(data.rows);
     if (!data.rows.length)
       return res.status(404).json({
         msg: "No Transaction Found",
