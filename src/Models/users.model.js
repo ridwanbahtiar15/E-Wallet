@@ -14,8 +14,12 @@ const readUsers = (query) => {
         values.push(`%${query.name}%`);
     }
     if (query.phone) {
-        conditions.push(`u.phone_number = $${values.length + 1} `);
+        conditions.push(`u.phone_number ILIKE $${values.length + 1} `);
         values.push(`%${query.phone}%`);
+    }
+    if (query.id) {
+        conditions.push(`u.id = $${values.length + 1} `);
+        values.push(parseInt(query.id));
     }
     if (conditions.length > 0) {
         sql += ` where ${conditions[0]}`;

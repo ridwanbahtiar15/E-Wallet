@@ -10,6 +10,7 @@ const searchUser = async (req, res) => {
     if (data.rowCount === 0) {
         return res.status(404).json({
           msg: "Data not found",
+          data: body.phone
         });
       };
     let pages = 1;
@@ -135,6 +136,10 @@ const updateUserPin = async (req, res) => {
     try {
     const {id} = req.userInfo;
     const {body} = req;
+    if(body.pin.length < 6)
+    return res.status(400).json({
+      msg: "Pin must be 6 numbers"
+    })
     const data = await updatePin(id, body.pin)
     res.status(201).json({
         msg: "Completed update pin",
