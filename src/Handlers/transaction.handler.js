@@ -5,7 +5,7 @@ const {
   getExpense,
   dashboardChartData,
   getTotal7Days,
-  getTotalLastWeek,
+  getTotalLastWeek, topUp, addBalance,
   deleteFromUser,
   deleteToUser,
   deleteFromToUser,
@@ -16,6 +16,9 @@ const {
   getBalanceDashboard,
 } = require("../Models/transaction.model");
 const db = require("../Configs/postgre");
+const snap = require("../Configs/midtrans")
+const { v4: uuidv4 } = require('uuid');
+
 
 const getHistory = async (req, res) => {
   try {
@@ -205,6 +208,61 @@ const getDashboardData = async (req, res) => {
   }
 };
 
+const getTokenTopUp = async (req, res) => {
+  const {body} = req;
+  if (body.amount === 0)
+  return res.status(400).json({
+    msg: "Plese input amount that greater than 1"
+  })
+  if (body.method !== "bca_va" && body.method !== "bni_va" && body.method !== "gopay" && body.method !== "bri_va")
+  return res.status(400).json({
+    msg: "Payment Method Unavailable",
+    method: body.method
+  })
+  const transactionDetails = {
+    transaction_details: {
+      order_id: uuidv4(),
+      gross_amount: parseInt(body.amount),
+    },
+    credit_card: {
+      secure: true,
+    },
+    customer_details: {
+      first_name: body.name
+    },
+    enabled_payments: [body.method]
+  };
+  try {
+    const snapToken = await snap.createTransactionToken(transactionDetails);
+    res.status(201).json({ snapToken });
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ error: 'Failed to create Snap token' });
+  }
+}
+
+const topUpUser = async (req, res) => {
+  const client = await db.connect();
+  try {
+    await client.query("begin");
+    const {body} = req;
+    const data = await topUp(body.id, body);
+    const balance = await addBalance(body.id, body.amount);
+    await client.query("commit");
+    res.status(200).json({
+      msg: "Success for Top Up"
+    })
+  } catch (error) {
+    console.error(error);
+    await client.query("rollback");
+    res.status(500).json({
+      msg: "Internal Server Error"
+    })
+  } finally {
+    client.release();
+  }
+}
+
 const deleteTransaction = async (req, res) => {
   try {
     const { query, params } = req;
@@ -278,6 +336,8 @@ module.exports = {
   getHistory,
   transactionChart,
   getDashboardData,
+  getTokenTopUp,
+  topUpUser,
   deleteTransaction,
   postTransfer,
 };
