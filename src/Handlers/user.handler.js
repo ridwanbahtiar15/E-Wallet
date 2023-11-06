@@ -10,6 +10,7 @@ const searchUser = async (req, res) => {
     if (data.rowCount === 0) {
         return res.status(404).json({
           msg: "Data not found",
+          data: body.phone
         });
       };
     let pages = 1;
