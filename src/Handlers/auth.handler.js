@@ -74,7 +74,7 @@ const loginUser = async (req, res) => {
       return res.status(400).json({
         msg: "Please activate email first",
       });
-    const { pwd, id, full_name } = result.rows[0];
+    const { pwd, id, full_name, photo_profile, phone_number } = result.rows[0];
     if (!(await argon.verify(pwd, body.password))) {
       return res.status(401).json({
         msg: "Invalid E-mail or Password",
@@ -99,6 +99,8 @@ const loginUser = async (req, res) => {
             token,
             id,
             full_name,
+            photo_profile,
+            phone_number
           },
         });
       }
@@ -159,7 +161,7 @@ const forgotPasswordUser = async (req, res) => {
       subject: "Reset Password",
       data: {
         username: result.rows[0].full_name,
-        activationLink: `https://e-wallet-by-fwg-16.vercel.app/auth/password?email=${body.email}&otp=${result.rows[0].otp}`,
+        activationLink: `https://e-wallet-frontend-three.vercel.app/resetpass?email=${body.email}&otp=${result.rows[0].otp}`,
       },
     });
     res.status(200).json({
@@ -177,9 +179,8 @@ const newPasswordUser = async (req, res) => {
     const { body, query } = req;
     const data = await selectUsers(query.email);
     if (data.rows[0].otp !== parseInt(query.otp))
-      return res.status(401).json({
+      return res.status(400).json({
         msg: "Your otp is wrong",
-        data: data.rows[0].otp,
       });
     const hashedPwd = await argon.hash(body.password);
     const result = await changePwd(hashedPwd, query.email);
