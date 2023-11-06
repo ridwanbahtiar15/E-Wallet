@@ -15,7 +15,7 @@ server.use(express.urlencoded({extended: false}));
 server.use(express.static("./public"));
 server.use(
     cors({
-      origin: "http://localhost:5173",
+      origin: "*",
       methods: ["PATCH","POST", "DELETE"],
     })
   );
