@@ -74,7 +74,8 @@ const loginUser = async (req, res) => {
       return res.status(400).json({
         msg: "Please activate email first",
       });
-    const { pwd, id, full_name, photo_profile, phone_number } = result.rows[0];
+
+    const { pwd, id, full_name, photo_profile, phone_number, userPin } = result.rows[0];
     if (!(await argon.verify(pwd, body.password))) {
       return res.status(401).json({
         msg: "Invalid E-mail or Password",
@@ -100,7 +101,8 @@ const loginUser = async (req, res) => {
             id,
             full_name,
             photo_profile,
-            phone_number
+            phone_number,
+            userPin,
           },
         });
       }
