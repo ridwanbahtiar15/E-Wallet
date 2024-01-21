@@ -23,17 +23,18 @@ const { v4: uuidv4 } = require('uuid');
 const getHistory = async (req, res) => {
   try {
     const { query, params, userInfo } = req;
-    const { full_name } = userInfo;
+    const { full_name, id } = userInfo;
     // console.log(userInfo);
     const result = [];
     const resultMeta = [];
 
-    const data = await getTransaction(query, params);
+    const data = await getTransaction(query, id);
+    console.log(data)
     // console.log(data.rows);
     if (!data.rows.length)
       return res.status(404).json({
         msg: "No Transaction Found",
-        result: [],
+        result: data,
       });
     for (let i = 0; i < data.rows.length; i++) {
       if (data.rows[i].transaction_type === "Transfer") {
@@ -78,7 +79,7 @@ const getHistory = async (req, res) => {
       }
     }
 
-    const metaData = await metaTransaction(query, params);
+    const metaData = await metaTransaction(query, id);
     for (let j = 0; j < metaData.rows.length; j++) {
       if (metaData.rows[j].sender_full_name === full_name) {
         if (metaData.rows[j].sender_deleted_at) continue;
@@ -296,6 +297,7 @@ const deleteTransaction = async (req, res) => {
 
 const postTransfer = async (req, res) => {
   const client = await db.connect();
+  const id = uuidv4()
   try {
     const { body, userInfo } = req;
     const userid = userInfo.id;
@@ -313,7 +315,7 @@ const postTransfer = async (req, res) => {
       });
     }
 
-    const result = await createTransfer(client, userid, body);
+    const result = await createTransfer(client, id, userid, body);
     const newBalance = await updateSenderBalance(client, userid, body);
     await updateReceiverBalance(client, body);
     await client.query("COMMIT");

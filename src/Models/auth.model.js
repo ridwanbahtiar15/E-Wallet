@@ -2,8 +2,8 @@ const db = require("../Configs/postgre");
 
 const register = (body, hashedPassword, otp) => {
     const sql =
-        "insert into users (email, pwd, phone_number, otp) VALUES ($1, $2, $3, $4, $5) returning id, full_name";
-    const values = [body.email, hashedPassword, body.phone, otp];
+        "insert into users (email, full_name, pwd, phone_number, otp) VALUES ($1, $2, $3, $4, $5) returning id, full_name";
+    const values = [body.email, body.full_name, hashedPassword, body.phone, otp];
     return db.query(sql, values)
 }
 const createBalance = (id) => {

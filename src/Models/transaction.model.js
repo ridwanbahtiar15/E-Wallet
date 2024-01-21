@@ -1,8 +1,27 @@
 const db = require("../Configs/postgre");
 
-const getTransaction = (query, params) => {
-  let sql = `SELECT t.id, u1.full_name AS "sender_full_name", u1.phone_number as "sender_phone_number", u1.photo_profile as "sender_photo_profile", t.from_deleted_at as "sender_deleted_at", u2.full_name AS "receiver_full_name", u2.phone_number as "receiver_phone_number", u2.photo_profile as "receiver_photo_profile", t.to_deleted_at as "receiver_deleted_at", tt.type_name as "transaction_type", t.transaction_amount, case when t.from_user_id = $2 then 'Expense' when t.to_user_id = $2 then 'Income' end as summary, t.created_at FROM "transaction" t JOIN users u1 ON t.from_user_id = u1.id JOIN users u2 ON t.to_user_id = u2.id join transaction_type tt on t.transaction_type_id = tt.id where (u1.id = $2 or u2.id = $2) `;
-  const values = [parseInt(query.page) || 1, params.userid];
+const getTransaction = (query, id) => {
+  let sql = `SELECT t.id, u1.full_name AS "sender_full_name", 
+  u1.phone_number as "sender_phone_number", 
+  u1.photo_profile as "sender_photo_profile", 
+  t.from_deleted_at as "sender_deleted_at", 
+  u2.full_name AS "receiver_full_name", 
+  u2.phone_number as "receiver_phone_number", 
+  u2.photo_profile as "receiver_photo_profile", 
+  t.to_deleted_at as "receiver_deleted_at", 
+  tt.type_name as "transaction_type", 
+  t.transaction_amount, 
+  case when t.from_user_id = $2 then 'Expense' when t.to_user_id = $2 then 'Income' end as summary, 
+  t.created_at 
+  FROM "transaction" t 
+  JOIN users u1 
+  ON t.from_user_id = u1.id 
+  JOIN users u2 
+  ON t.to_user_id = u2.id 
+  join transaction_type tt 
+  on t.transaction_type_id = tt.id 
+  where (u1.id = $2 or u2.id = $2) `;
+  const values = [parseInt(query.page) || 1, id];
   //   where (u1.id = $2 or u2.id = $2)
   if (query.name) {
     values.push(`%${query.name}%`);
@@ -201,9 +220,9 @@ const getUserBalance = (client, userid) => {
 
   return client.query(sql, values);
 };
-const createTransfer = (client, userid, body) => {
-  let sql = `WITH inserted AS (INSERT INTO "transaction" (from_user_id, to_user_id, transaction_amount, transaction_type_id, note, payment_type_id) values ($1, $2, $3, 1, $4, 0) RETURNING *) SELECT i.id, u1.full_name as "sender_full_name", u2.full_name as "receiver_full_name", i.transaction_amount, tt.type_name as "transaction_type", i.note, i.created_at FROM inserted i JOIN  users u1 ON i.from_user_id = u1.id JOIN  users u2 ON i.to_user_id = u2.id join transaction_type tt on i.transaction_type_id = tt.id;`;
-  const values = [userid, body.to, body.amount, body.notes];
+const createTransfer = (client, id, userid, body) => {
+  let sql = `WITH inserted AS (INSERT INTO "transaction" (id, from_user_id, to_user_id, transaction_amount, transaction_type_id, note, payment_type_id) values ($1, $2, $3, $4, 1, $5, 0) RETURNING *) SELECT i.id, u1.full_name as "sender_full_name", u2.full_name as "receiver_full_name", i.transaction_amount, tt.type_name as "transaction_type", i.note, i.created_at FROM inserted i JOIN  users u1 ON i.from_user_id = u1.id JOIN  users u2 ON i.to_user_id = u2.id join transaction_type tt on i.transaction_type_id = tt.id;`;
+  const values = [id, userid, body.to, body.amount, body.notes];
 
   return client.query(sql, values);
 };
