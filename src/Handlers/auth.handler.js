@@ -99,6 +99,7 @@ const loginUser = async (req, res) => {
           data: {
             token,
             id,
+            pin,
             full_name,
             photo_profile,
             phone_number,

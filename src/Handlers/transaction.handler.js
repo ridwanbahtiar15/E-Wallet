@@ -34,7 +34,7 @@ const getHistory = async (req, res) => {
     if (!data.rows.length)
       return res.status(404).json({
         msg: "No Transaction Found",
-        result: [],
+        result: data,
       });
     for (let i = 0; i < data.rows.length; i++) {
       if (data.rows[i].transaction_type === "Transfer") {
@@ -297,6 +297,7 @@ const deleteTransaction = async (req, res) => {
 
 const postTransfer = async (req, res) => {
   const client = await db.connect();
+  const id = uuidv4()
   try {
     const { body, userInfo } = req;
     const userid = userInfo.id;
@@ -314,7 +315,7 @@ const postTransfer = async (req, res) => {
       });
     }
 
-    const result = await createTransfer(client, userid, body);
+    const result = await createTransfer(client, id, userid, body);
     const newBalance = await updateSenderBalance(client, userid, body);
     await updateReceiverBalance(client, body);
     await client.query("COMMIT");

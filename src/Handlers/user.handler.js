@@ -117,7 +117,9 @@ const confirmPin = async (req, res) => {
     const {id} = req.userInfo;
     const {body} = req;
     const data = await sensitiveProfile(id);
-    if (body.last_pin !== data.rows[0].pin)
+    console.log(data.rows[0].pin)
+    console.log(body.last_pin)
+    if (parseInt(body.last_pin) !== data.rows[0].pin)
     return res.status(400).json({
         msg: "Your input wrong pin"
     })
