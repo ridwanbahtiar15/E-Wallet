@@ -1,26 +1,7 @@
 const db = require("../Configs/postgre");
 
 const getTransaction = (query, id) => {
-  let sql = `SELECT t.id, u1.full_name AS "sender_full_name", 
-  u1.phone_number as "sender_phone_number", 
-  u1.photo_profile as "sender_photo_profile", 
-  t.from_deleted_at as "sender_deleted_at", 
-  u2.full_name AS "receiver_full_name", 
-  u2.phone_number as "receiver_phone_number", 
-  u2.photo_profile as "receiver_photo_profile", 
-  t.to_deleted_at as "receiver_deleted_at", 
-  tt.type_name as "transaction_type", 
-  t.transaction_amount, 
-  case when t.from_user_id = $2 then 'Expense' when t.to_user_id = $2 then 'Income' end as summary, 
-  t.created_at 
-  FROM "transaction" t 
-  JOIN users u1 
-  ON t.from_user_id = u1.id 
-  JOIN users u2 
-  ON t.to_user_id = u2.id 
-  join transaction_type tt 
-  on t.transaction_type_id = tt.id 
-  where (u1.id = $2 or u2.id = $2) `;
+  let sql = `SELECT t.id, t.from_user_id, u1.full_name AS "sender_full_name", u1.phone_number as "sender_phone_number", u1.photo_profile as "sender_photo_profile", t.from_deleted_at as "sender_deleted_at", t.to_user_id, u2.full_name AS "receiver_full_name", u2.phone_number as "receiver_phone_number", u2.photo_profile as "receiver_photo_profile", t.to_deleted_at as "receiver_deleted_at", tt.type_name as "transaction_type", t.transaction_amount, case when t.from_user_id = $2 then 'Expense' when t.to_user_id = $2 then 'Income' end as summary, t.created_at FROM "transaction" t JOIN users u1 ON t.from_user_id = u1.id JOIN users u2 ON t.to_user_id = u2.id join transaction_type tt on t.transaction_type_id = tt.id where (u1.id = $2 or u2.id = $2) `;
   const values = [parseInt(query.page) || 1, id];
   //   where (u1.id = $2 or u2.id = $2)
   if (query.name) {
@@ -32,14 +13,14 @@ const getTransaction = (query, id) => {
   sql += "order by t.created_at desc";
   sql += ` limit 7 offset ($1 * 7) - 7`;
 
-  console.log(sql);
+  // console.log(sql);
   return db.query(sql, values);
 };
 
-const metaTransaction = (query, params) => {
-  let sql = `SELECT u1.full_name AS "sender_full_name", t.from_deleted_at as "sender_deleted_at", u2.full_name AS "receiver_full_name", t.to_deleted_at as "receiver_deleted_at", t.created_at FROM "transaction" t JOIN users u1 ON t.from_user_id = u1.id JOIN users u2 ON t.to_user_id = u2.id join transaction_type tt on t.transaction_type_id = tt.id where (u1.id = $1 or u2.id = $1) `;
+const metaTransaction = (query, id) => {
+  let sql = `SELECT t.from_user_id, u1.full_name AS "sender_full_name", t.from_deleted_at as "sender_deleted_at", t.to_user_id, u2.full_name AS "receiver_full_name", t.to_deleted_at as "receiver_deleted_at", t.created_at FROM "transaction" t JOIN users u1 ON t.from_user_id = u1.id JOIN users u2 ON t.to_user_id = u2.id join transaction_type tt on t.transaction_type_id = tt.id where (u1.id = $1 or u2.id = $1) `;
   // let sql = `select count(*) as total_data FROM "transaction" t JOIN users u1 ON t.from_user_id = u1.id JOIN users u2 ON t.to_user_id = u2.id join transaction_type tt on t.transaction_type_id = tt.id where (u1.id = $1 or u2.id = $1) `;
-  const values = [params.userid];
+  const values = [id];
 
   if (query.name) {
     values.push(`%${query.name}%`);
@@ -176,24 +157,24 @@ group by "summary" `;
 
 const topUp = (id, body) => {
   const sql = `insert into transaction (from_user_id, to_user_id, transaction_amount, transaction_type_id, payment_type_id)
-  values ($1, $1, $2, 2, $3)`
+  values ($1, $1, $2, 2, $3)`;
   const values = [id, body.amount, body.payment_type];
-  return db.query(sql, values)
-}
+  return db.query(sql, values);
+};
 
 const addBalance = (id, amount) => {
   // const values = [id, amount]
-  // let sql = `update user_balance 
+  // let sql = `update user_balance
   // set balance = balance + `
   // sql += parseInt(values[1])
   // sql += ` where user_id = $1;`
   // return db.query(sql, values)
   const sql = `update user_balance 
   set balance = balance + $2 
-  where user_id = $1;`
+  where user_id = $1;`;
   const values = [id, amount];
-  return db.query(sql, values)
-}
+  return db.query(sql, values);
+};
 
 const deleteFromUser = (params) => {
   let sql = 'update "transaction" t set from_deleted_at = now() where t.id = $1 ';

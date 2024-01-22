@@ -5,7 +5,9 @@ const {
   getExpense,
   dashboardChartData,
   getTotal7Days,
-  getTotalLastWeek, topUp, addBalance,
+  getTotalLastWeek,
+  topUp,
+  addBalance,
   deleteFromUser,
   deleteToUser,
   deleteFromToUser,
@@ -16,20 +18,18 @@ const {
   getBalanceDashboard,
 } = require("../Models/transaction.model");
 const db = require("../Configs/postgre");
-const snap = require("../Configs/midtrans")
-const { v4: uuidv4 } = require('uuid');
-
+const snap = require("../Configs/midtrans");
+const { v4: uuidv4 } = require("uuid");
 
 const getHistory = async (req, res) => {
   try {
-    const { query, params, userInfo } = req;
-    const { full_name, id } = userInfo;
-    // console.log(userInfo);
+    const { query, userInfo } = req;
+    const { id } = userInfo;
+    // console.log(id);
     const result = [];
     const resultMeta = [];
 
     const data = await getTransaction(query, id);
-    console.log(data)
     // console.log(data.rows);
     if (!data.rows.length)
       return res.status(404).json({
@@ -38,7 +38,7 @@ const getHistory = async (req, res) => {
       });
     for (let i = 0; i < data.rows.length; i++) {
       if (data.rows[i].transaction_type === "Transfer") {
-        if (data.rows[i].sender_full_name === full_name) {
+        if (parseInt(data.rows[i].from_user_id) === id) {
           if (data.rows[i].sender_deleted_at) continue;
           result.push({
             id: data.rows[i].id,
@@ -51,7 +51,7 @@ const getHistory = async (req, res) => {
             created_at: data.rows[i].created_at,
           });
         }
-        if (data.rows[i].receiver_full_name === full_name) {
+        if (parseInt(data.rows[i].to_user_id) === id) {
           if (data.rows[i].receiver_deleted_at) continue;
           result.push({
             id: data.rows[i].id,
@@ -81,12 +81,12 @@ const getHistory = async (req, res) => {
 
     const metaData = await metaTransaction(query, id);
     for (let j = 0; j < metaData.rows.length; j++) {
-      if (metaData.rows[j].sender_full_name === full_name) {
+      if (parseInt(metaData.rows[j].from_user_id) === id) {
         if (metaData.rows[j].sender_deleted_at) continue;
         resultMeta.push({
           full_name: metaData.rows[j].receiver_full_name,
         });
-      } else if (metaData.rows[j].receiver_full_name === full_name) {
+      } else if (parseInt(metaData.rows[j].to_user_id) === id) {
         if (metaData.rows[j].receiver_deleted_at) continue;
         resultMeta.push({
           full_name: metaData.rows[j].sender_full_name,
@@ -210,16 +210,16 @@ const getDashboardData = async (req, res) => {
 };
 
 const getTokenTopUp = async (req, res) => {
-  const {body} = req;
+  const { body } = req;
   if (body.amount === 0)
-  return res.status(400).json({
-    msg: "Plese input amount that greater than 1"
-  })
+    return res.status(400).json({
+      msg: "Plese input amount that greater than 1",
+    });
   if (body.method !== "bca_va" && body.method !== "bni_va" && body.method !== "gopay" && body.method !== "bri_va")
-  return res.status(400).json({
-    msg: "Payment Method Unavailable",
-    method: body.method
-  })
+    return res.status(400).json({
+      msg: "Payment Method Unavailable",
+      method: body.method,
+    });
   const transactionDetails = {
     transaction_details: {
       order_id: uuidv4(),
@@ -229,40 +229,40 @@ const getTokenTopUp = async (req, res) => {
       secure: true,
     },
     customer_details: {
-      first_name: body.name
+      first_name: body.name,
     },
-    enabled_payments: [body.method]
+    enabled_payments: [body.method],
   };
   try {
     const snapToken = await snap.createTransactionToken(transactionDetails);
     res.status(201).json({ snapToken });
   } catch (error) {
-    console.log(error)
-    res.status(500).json({ error: 'Failed to create Snap token' });
+    console.log(error);
+    res.status(500).json({ error: "Failed to create Snap token" });
   }
-}
+};
 
 const topUpUser = async (req, res) => {
   const client = await db.connect();
   try {
     await client.query("begin");
-    const {body} = req;
+    const { body } = req;
     const data = await topUp(body.id, body);
     const balance = await addBalance(body.id, body.amount);
     await client.query("commit");
     res.status(200).json({
-      msg: "Success for Top Up"
-    })
+      msg: "Success for Top Up",
+    });
   } catch (error) {
     console.error(error);
     await client.query("rollback");
     res.status(500).json({
-      msg: "Internal Server Error"
-    })
+      msg: "Internal Server Error",
+    });
   } finally {
     client.release();
   }
-}
+};
 
 const deleteTransaction = async (req, res) => {
   try {
