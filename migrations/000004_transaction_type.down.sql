@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS "fintech".transaction_type;
