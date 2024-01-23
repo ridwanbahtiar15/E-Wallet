@@ -1,40 +1,34 @@
-# E Wallet Back-End Team Project with React JS
+# E Wallet Back-End Express JS
 
+<br>
+<br>
 <div align="center">
-  <img src="https://res.cloudinary.com/doncmmfaa/image/upload/v1705848222/E-Wallet%20By%20FWG%2016/Frame_12_yzmexw.png" alt="Logo" />
+  <img src="https://res.cloudinary.com/doncmmfaa/image/upload/v1705848222/E-Wallet%20By%20FWG%2016/Frame_12_yzmexw.png" alt="Logo"  width="340" height="100"/>
 </div>
-
+<br>
+<br>
 Introducing a digital wallet that's not just about transactions but a seamless journey in the digital realm. It empowers users with features like peer-to-peer transfers, easy top-ups, and a comprehensive transaction history tracker. This project, a collaborative team effort, unfolded its magic over a dynamic week, following the agile SCRUM methodology. Fueled by defined requirements, our goal was clear, and the result is a digital wallet experience that goes beyond just handling money – it fosters a connection between users and their financial journey.
 
 ## Technologies used in this project
 
-- Express JS \
+- [Express JS](https://pkg.go.dev/github.com/gin-gonic/gin#section-readme) \
   Express JS is a minimalist and flexible Node.js web application framework. \
-  [Express JS Documentation](https://pkg.go.dev/github.com/gin-gonic/gin#section-readme)
 
-- JSON Web Token \
+- [JSON Web Token](https://jwt.io/introduction) \
   JSON Web Token (JWT) is a compact, URL-safe means of representing claims between two parties. \
-  [JSON Web Token Documentation](https://jwt.io/introduction)
 
-- Cloudinary \
-  Cloudinary is a cloud-based service for managing and optimizing media assets such as images and videos in web development. It simplifies tasks like image uploading, transformation, and delivery, offering a seamless solution for handling multimedia content in applications. \
-  [Cloudinary Documentation](https://cloudinary.com/documentation)
+- [Cloudinary](https://cloudinary.com/documentation) \
+  Cloudinary is a cloud-based service for managing and optimizing media assets such as images and videos in web development. \
 
-- Cors \
-  CORS is a security feature implemented in web browsers that controls how web pages in one domain can request and interact with resources from another domain. In web development, CORS is crucial for managing and securing cross-origin HTTP requests, ensuring proper communication between different domains. \
-  [Cors Documentation](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS)
-
-- Midtrans \
+- [Midtrans](https://docs.midtrans.com/) \
   Midtrans is a payment gateway service that simplifies online transactions. \
-  [Midtrans Documentation](https://docs.midtrans.com/)
 
-- PG \
+- [PG](https://github.com/brianc/node-postgres) \
   Node-Postgres, commonly abbreviated as pg, is a Node.js driver for PostgreSQL databases. \
-  [PG Documentation](https://github.com/brianc/node-postgres)
 
 ## Environment Variables
 
-To run this project, you will need to add the following environment variables to your .env file
+To run this project, you will need to add the following environment variables to your .env file in your root directory
 
 ```bash
   DB_HOST = "YOUR DB_HOST"
@@ -59,25 +53,25 @@ To run this project, you will need to add the following environment variables to
 
 ## Run Locally
 
-Clone the project
+1. Clone the project
 
 ```bash
   $ git clone https://github.com/GilangRizaltin/E-Wallet-Frontend
 ```
 
-Go to the project directory
+2. Go to the project directory
 
 ```bash
   $ cd E-Wallet-Frontend
 ```
 
-Install dependencies
+3. Install dependencies
 
 ```bash
   $ npm install
 ```
 
-Start the server
+4. Start the server
 
 ```bash
   $ npm run dev
@@ -87,35 +81,23 @@ Start the server
 
 #### Authentication & Authorization
 
-```http
-  /auth
-```
-
-| Method | Endpoint      | Description                        |
-| :----- | :------------ | :--------------------------------- |
-| `post` | `"/register"` | register user                      |
-| `post` | `"/login"`    | get access and identity of user    |
-| `post` | `"/logout"`   | delete access and identity of user |
+| Method | Endpoint           | Description                        |
+| :----- | :----------------- | :--------------------------------- |
+| `post` | `"/auth/register"` | register user                      |
+| `post` | `"/auth/login"`    | get access and identity of user    |
+| `post` | `"/auth/logout"`   | delete access and identity of user |
 
 #### Users
 
-```http
-  /user
-```
-
-| Method | Endpoint     | Description      |
-| :----- | :----------- | :--------------- |
-| `get`  | `"/profile"` | Get profile user |
+| Method | Endpoint          | Description      |
+| :----- | :---------------- | :--------------- |
+| `get`  | `"/user/profile"` | Get profile user |
 
 #### Order Transaction
 
-```http
-  /transaction
-```
-
-| Method | Endpoint | Description             |
-| :----- | :------- | :---------------------- |
-| `get`  | `"/"`    | Get transaction history |
+| Method | Endpoint         | Description             |
+| :----- | :--------------- | :---------------------- |
+| `get`  | `"/transaction"` | Get transaction history |
 
 ## Documentation
 
