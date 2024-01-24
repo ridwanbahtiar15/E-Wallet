@@ -12,19 +12,19 @@ Introducing a digital wallet that's not just about transactions but a seamless j
 ## Technologies used in this project
 
 - [Express JS](https://pkg.go.dev/github.com/gin-gonic/gin#section-readme) \
-  Express JS is a minimalist and flexible Node.js web application framework. \
+  Express JS is a minimalist and flexible Node.js web application framework.
 
 - [JSON Web Token](https://jwt.io/introduction) \
-  JSON Web Token (JWT) is a compact, URL-safe means of representing claims between two parties. \
+  JSON Web Token (JWT) is a compact, URL-safe means of representing claims between two parties.
 
 - [Cloudinary](https://cloudinary.com/documentation) \
-  Cloudinary is a cloud-based service for managing and optimizing media assets such as images and videos in web development. \
+  Cloudinary is a cloud-based service for managing and optimizing media assets such as images and videos in web development.
 
 - [Midtrans](https://docs.midtrans.com/) \
-  Midtrans is a payment gateway service that simplifies online transactions. \
+  Midtrans is a payment gateway service that simplifies online transactions.
 
 - [PG](https://github.com/brianc/node-postgres) \
-  Node-Postgres, commonly abbreviated as pg, is a Node.js driver for PostgreSQL databases. \
+  Node-Postgres, commonly abbreviated as pg, is a Node.js driver for PostgreSQL databases.
 
 ## Environment Variables
 
