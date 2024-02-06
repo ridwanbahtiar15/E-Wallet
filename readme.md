@@ -83,7 +83,7 @@ Order Transaction
 
 ## Related Project
 
-- [Backend End With React JS](https://github.com/ridwanbahtiar15/E-Wallet-Frontend)
+- [Front End With React JS](https://github.com/ridwanbahtiar15/E-Wallet-Frontend)
 
 ## Collaborator
 
