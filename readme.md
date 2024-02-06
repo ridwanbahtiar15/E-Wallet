@@ -48,11 +48,11 @@ MIDTRANS_SERVER_KEY =  Your Midtrans Server Key
 
 1.  Clone project from github repository
 
-        $ git clone https://github.com/ridwanbahtiar15/E-Wallet-Frontend
+        $ git clone https://github.com/ridwanbahtiar15/E-Wallet
 
-2.  go to folder coffee-shop
+2.  go to folder E-Wallet
 
-        $ cd E-Wallet-Frontend
+        $ cd E-Wallet
 
 3.  install dependencies
 
@@ -80,6 +80,10 @@ Order Transaction
 | Route | Method | Description |
 | -------------- | ----------------------- | ------ |
 | /transaction | POST | Get transaction history |
+
+## Documentation
+
+[Postman Documentation](https://documenter.getpostman.com/view/28541505/2s9Yyqhgjq)
 
 ## Related Project
 
